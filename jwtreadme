@@ -1,0 +1,33 @@
+JWT VERIFICATION AT API GATEWAY — WHAT ARE WE ACTUALLY DOING?
+Option A: JWT verification directly at API Gateway ✅ (Recommended)
+How it works
+
+Frontend sends JWT in Authorization: Bearer <token>
+
+API Gateway:
+
+Verifies signature
+
+Verifies expiry
+
+Verifies issuer
+
+Verifies audience / scopes
+
+If valid → route request
+
+If invalid → reject immediately (401)
+
+This is what Spring does when you configure in yaml:
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://issuer.example.com
+
+
+➡ No network call per request
+➡ Uses public key (JWKS) cached in memory
+➡ Extremely fast (microseconds)

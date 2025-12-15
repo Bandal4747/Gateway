@@ -1,0 +1,30 @@
+API Gateway = Security boundary, not business logic.
+ECURITY GOALS (CLEAR INTENT)
+
+Your gateway must:
+
+Validate JWT tokens
+
+Allow public endpoints (auth, health)
+
+Block everything else
+
+Support React + Flutter CORS
+
+Be stateless
+
+Be reactive end-to-end
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://issuer.example.com
+Keycloak
+
+Auth0
+
+Cognito
+
+Custom IdP

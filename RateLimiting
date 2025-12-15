@@ -1,0 +1,124 @@
+A Redis-backed Token Bucket rate limiter that:
+
+✅ Works in reactive mode
+
+✅ Is distributed (multiple gateway instances)
+
+✅ Can limit by:
+
+User (JWT sub)
+
+Client ID
+
+IP (fallback)
+
+✅ Is configurable per route
+
+✅ Is production-safe
+
+Client
+  |
+API Gateway
+  ├── JWT Auth
+  ├── Global Logging
+  ├── Rate Limiter (Redis)
+  |
+Redis (central token store)
+
+Why Redis?
+
+In-memory but distributed
+
+Atomic operations (Lua)
+
+No local state → Kubernetes friendly
+
+Do NOT add Lettuce or Jedis manually
+Spring Boot 3.x auto-configures Lettuce (reactive)
+
+HOW SPRING CLOUD GATEWAY RATE LIMITING WORKS
+
+Spring Cloud Gateway uses:
+
+RedisRateLimiter
+
+Lua script (atomic)
+
+Token Bucket algorithm
+
+Key parameters:
+Parameter   Meaning
+replenishRate   Tokens added per second
+burstCapacity   Max bucket size
+requestedTokens Tokens per request
+
+KEY RESOLUTION STRATEGY (VERY IMPORTANT)
+
+Rate limiting is useless without good keys.
+
+We will use:
+
+JWT subject (sub)
+
+Fallback to IP address
+
+This is industry standard.
+
+
+Rule    Value
+Requests per second 10
+Burst allowed   20
+Per request cost    1 token
+Key JWT user / IP
+
+
+WHAT HAPPENS AT RUNTIME
+
+Request comes in
+
+Gateway extracts user or IP
+
+Redis Lua script runs
+
+Token available?
+
+✅ Yes → forward request
+
+❌ No → HTTP 429 Too Many Requests
+
+SAMPLE RESPONSE WHEN RATE LIMITED
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Remaining: 0
+
+
+This is HTTP-standard compliant.
+
+9️⃣ COMMON PITFALLS (VERY IMPORTANT)
+❌ Mistake 1: No Redis running
+
+→ Gateway will fail at startup
+
+✔ Solution:
+
+docker run -d -p 6379:6379 redis
+
+❌ Mistake 2: Using IP only
+
+→ NAT / load balancers break accuracy
+
+✔ Solution:
+Use JWT subject first
+
+❌ Mistake 3: Global rate limit only
+
+→ Different APIs need different limits
+
+✔ Solution:
+Rate limit per route
+
+OWASP & SECURITY NOTES
+
+✔ Prevents brute force
+✔ Prevents DoS
+✔ Complements WAF
+✔ Stateless & scalable
